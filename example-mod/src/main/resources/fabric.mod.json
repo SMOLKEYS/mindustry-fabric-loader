@@ -23,6 +23,6 @@
   ],
   "depends": {
     "fabricloader": ">=0.13.3",
-    "mindustry": "7.135.*"
+    "mindustry": "8.*"
   }
 }

@@ -11,7 +11,7 @@ import org.apache.commons.io.IOUtils;
 
 import javax.swing.*;
 import java.io.*;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,12 +23,14 @@ public class Installer extends SwingWorker<Exception, String> {
     private static final int VERSION = 1;
     private final String appdataDir;
     private final String gameDir;
+    private final boolean fetchLatestVersion;
 
     public Consumer<String> onLog;
     public Consumer<Exception> onDone;
 
-    public Installer(String gameDir) {
+    public Installer(String gameDir, boolean fetchLatestVersion) {
         this.gameDir = gameDir;
+        this.fetchLatestVersion = fetchLatestVersion;
         AppDirs appDirs = AppDirsFactory.getInstance();
         appdataDir = Path.of(appDirs.getUserDataDir("Mindustry_Fabric", null, null)).toString();
     }
@@ -46,13 +48,13 @@ public class Installer extends SwingWorker<Exception, String> {
     private void install() throws Exception {
         log(" === Installing fabric === ");
 
-        Path gamePath = locateGame();
-        if (gamePath == null) {
+        Optional<Path> gamePathOpt = locateGame();
+        if (gamePathOpt.isEmpty()) {
             log("Could not find game in specified directory.");
             return;
-        } else {
-            log("Found game at " + gamePath.toAbsolutePath().normalize());
         }
+        Path gamePath = gamePathOpt.get();
+        log("Found game at " + gamePath.toAbsolutePath().normalize());
 
         log("Checking out stable version");
         InstallConfig config = loadConfig();
@@ -64,7 +66,7 @@ public class Installer extends SwingWorker<Exception, String> {
         List<String> classpath = installDependencies(new ArrayList<>(config.clientDependencies.values()));
         File argFile = Path.of(appdataDir, config.providerVersion + ".args.txt").toFile();
         BufferedWriter writer = new BufferedWriter(new FileWriter(argFile, StandardCharsets.UTF_8));
-        writer.write("-cp " + String.join(System.getProperty("path.separator"), classpath));
+        writer.write("-cp " + String.join(File.pathSeparator, classpath));
         writer.close();
 
         log("Copying start script to " + argFile.getAbsolutePath());
@@ -77,23 +79,34 @@ public class Installer extends SwingWorker<Exception, String> {
         publish(s);
     }
 
-    private Path locateGame() {
+    private Optional<Path> locateGame() {
         List<String> locations = new ArrayList<>();
         locations.add("./jre/desktop.jar");
         locations.add("./Mindustry.jar");
         locations.add("./desktop-release.jar");
         locations.add("./desktop.jar");
         return locations.stream().map(path -> Path.of(gameDir, path))
-                .filter(Files::isRegularFile)
-                .findFirst().orElse(null);
+            .filter(Files::isRegularFile)
+            .findFirst();
     }
 
     private InstallConfig loadConfig() throws JsonParserException, IOException {
         String rawJson;
-        if(MainView.overrideConfigPath != null && !MainView.overrideConfigPath.isBlank()) {
+
+        if (MainView.overrideConfigPath != null && !MainView.overrideConfigPath.isBlank()) {
             rawJson = Files.readString(Paths.get(MainView.overrideConfigPath));
         } else {
-            rawJson = IOUtils.toString(new URL("https://raw.githubusercontent.com/Qendolin/mindustry-fabric-loader/stable/installer/src/main/resources/fabric-dependencies.json"), StandardCharsets.UTF_8);
+            if(fetchLatestVersion) {
+                String urlString = "https://raw.githubusercontent.com/Qendolin/mindustry-fabric-loader/stable/installer/src/main/resources/fabric-dependencies.json";
+                rawJson = IOUtils.toString(URI.create(urlString).toURL(), StandardCharsets.UTF_8);
+            } else {
+                try (InputStream is = getClass().getClassLoader().getResourceAsStream("fabric-dependencies.json")) {
+                    if (is == null) {
+                        throw new IOException("The installer is faulty: Unable to read fabric dependencies file.");
+                    }
+                    rawJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
         }
         JsonObject json = JsonParser.object().from(rawJson);
 
@@ -108,7 +121,7 @@ public class Installer extends SwingWorker<Exception, String> {
             Files.createDirectories(Path.of(appdataDir, "libraries", dep.dir));
             Path dest = Paths.get(appdataDir, "libraries", dep.dir, dep.artifact);
 
-            FileUtils.copyURLToFile(new URL(dep.url), dest.toFile());
+            FileUtils.copyURLToFile(URI.create(dep.url).toURL(), dest.toFile());
             classpath.add(dest.toAbsolutePath().normalize().toString());
         }
 
@@ -119,14 +132,18 @@ public class Installer extends SwingWorker<Exception, String> {
         try {
             String startScriptFile = isWindows() ? "mindustry_fabric.cmd" : "mindustry_fabric.sh";
             InputStream reader = getClass().getClassLoader().getResourceAsStream(startScriptFile);
+            if(reader == null) {
+                throw new RuntimeException("The installer is faulty: Unable to read start script resource.");
+            }
+
             String content = new String(reader.readAllBytes(), StandardCharsets.UTF_8);
 
             if (isWindows()) content = content.replaceAll("\r?\n", "\r\n");
             else content = content.replaceAll("\r?\n", "\n");
 
             content = content.replace("{{ARG_FILE}}", argFile).
-                    replace("{{MAIN_CLASS}}", mainClass)
-                    .replace("{{ENV_SIDE}}", "client");
+                replace("{{MAIN_CLASS}}", mainClass)
+                .replace("{{ENV_SIDE}}", "client");
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(Paths.get(gameDir, startScriptFile).toFile()));
             writer.write(content);
@@ -204,12 +221,12 @@ public class Installer extends SwingWorker<Exception, String> {
 
             Dependency serverFabricDep = serverDepMap.get("net.fabricmc:fabric-loader");
             Dependency clientFabricDep = clientDepMap.get("net.fabricmc:fabric-loader");
-            if(!serverFabricDep.equals(clientFabricDep))
+            if (!serverFabricDep.equals(clientFabricDep))
                 throw new AssertionError("Client and Server fabric-loader dependency mismatch");
 
             Dependency serverProviderDep = serverDepMap.get("com.github.Qendolin:mindustry-fabric-loader");
             Dependency clientProviderDep = clientDepMap.get("com.github.Qendolin:mindustry-fabric-loader");
-            if(!serverProviderDep.equals(clientProviderDep))
+            if (!serverProviderDep.equals(clientProviderDep))
                 throw new AssertionError("Client and Server mindustry-fabric-loader dependency mismatch");
 
             return new InstallConfig(mainClientClass, mainServerClass, serverFabricDep.version, serverProviderDep.version, clientDepMap, serverDepMap);
@@ -248,7 +265,7 @@ public class Installer extends SwingWorker<Exception, String> {
 
             this.artifact = name + "-" + version + ".jar";
             this.url = repo + Path.of(group.replace(".", "/"), name, version, artifact)
-                    .toString().replace("\\", "/");
+                .toString().replace("\\", "/");
             this.dir = Path.of(group.replace(".", "/"), name).toString();
         }
 

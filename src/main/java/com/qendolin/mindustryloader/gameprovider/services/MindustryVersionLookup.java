@@ -30,8 +30,8 @@ public class MindustryVersionLookup {
         props.load(Files.newInputStream(file));
 
         builder.setType(props.getProperty("type"))
-                .setModifier(props.getProperty("modifier"))
-                .setNumber(Integer.parseInt(props.getProperty("number")));
+            .setModifier(props.getProperty("modifier"))
+            .setNumber(Integer.parseInt(props.getProperty("number")));
 
         String build = props.getProperty("build");
         if (build.contains(".")) {

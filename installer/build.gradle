@@ -1,59 +1,64 @@
 plugins {
-    id 'java'
+	id 'java'
 }
 
-group 'com.qendolin.mindustryloader'
-archivesBaseName = 'mindustry-fabric-installer'
-version '0.2.0'
+version = "0.2.1"
+group = "com.qendolin.mindustryloader"
+base {
+	archivesName = "mindustry-fabric-installer"
+}
 
 repositories {
-    mavenCentral()
-    maven {
-        url "https://www.jetbrains.com/intellij-repository/releases"
-    }
+	mavenCentral()
+	maven {
+		url "https://www.jetbrains.com/intellij-repository/releases"
+	}
 }
 
 dependencies {
-    implementation group: 'com.grack', name: 'nanojson', version: '1.7'
-    implementation 'net.harawata:appdirs:1.2.1'
-    implementation 'com.jetbrains.intellij.java:java-gui-forms-rt:213.6777.58'
-    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+	implementation group: 'com.grack', name: 'nanojson', version: '1.7'
+	implementation 'net.harawata:appdirs:1.2.1'
+	implementation 'com.jetbrains.intellij.java:java-gui-forms-rt:213.6777.58'
+	implementation group: 'commons-io', name: 'commons-io', version: '2.6'
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = "UTF-8"
+	it.options.release = 25
+}
 
 java {
-    withSourcesJar()
+	withSourcesJar()
 }
 
 jar {
-    manifest {
-        attributes 'Main-Class': 'com.qendolin.mindustryloader.installer.MainView'
-    }
+	manifest {
+		attributes 'Main-Class': 'com.qendolin.mindustryloader.installer.MainView'
+	}
 }
 
 sourceSets {
-    main {
-        java {
-            srcDir 'src'
-        }
-    }
+	main {
+		java {
+			srcDir 'src'
+		}
+	}
 }
 
-task fatJar(type: Jar) {
-    group "build"
+tasks.register('fatJar', Jar) {
+	group "build"
+	description = "Assembles a jar archive containing the main classes and all dependencies."
 
-    archiveClassifier.set("fat")
+	archiveClassifier.set("fat")
 
-    manifest {
-        attributes 'Main-Class': 'com.qendolin.mindustryloader.installer.MainView'
-    }
-    duplicatesStrategy "exclude"
-    from {
-        configurations.runtimeClasspath.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
-    with jar
+	manifest {
+		attributes 'Main-Class': 'com.qendolin.mindustryloader.installer.MainView'
+	}
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	from {
+		configurations.runtimeClasspath.collect {
+			it.isDirectory() ? it : zipTree(it)
+		}
+	}
+	with jar
 }

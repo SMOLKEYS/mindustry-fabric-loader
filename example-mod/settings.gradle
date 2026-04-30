@@ -1,5 +1,12 @@
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-    }
+	repositories {
+		gradlePluginPortal()
+	}
+}
+
+includeBuild('..') {
+	dependencySubstitution {
+		// This forces Gradle to map the "remote" name to the local project
+		substitute module('com.github.qendolin:mindustry-fabric-loader') using project(':')
+	}
 }

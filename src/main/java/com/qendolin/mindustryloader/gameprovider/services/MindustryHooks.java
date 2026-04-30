@@ -14,6 +14,7 @@ public final class MindustryHooks {
     public static final String INTERNAL_NAME = MindustryHooks.class.getName().replace('.', '/');
 
     public static void initClient() {
+        Log.debug(LogCategory.ENTRYPOINT, "Client entrypoint hook called");
         Path runDir = Paths.get(".");
         FabricLoaderImpl loader = FabricLoaderImpl.INSTANCE;
         loader.prepareModInit(runDir, FabricLoaderImpl.INSTANCE.getGameInstance());
@@ -22,6 +23,7 @@ public final class MindustryHooks {
     }
 
     public static void initServer() {
+        Log.trace(LogCategory.ENTRYPOINT, "Server entrypoint hook called");
         Path runDir = Paths.get(".");
         FabricLoaderImpl loader = FabricLoaderImpl.INSTANCE;
         loader.prepareModInit(runDir, FabricLoaderImpl.INSTANCE.getGameInstance());

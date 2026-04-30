@@ -16,7 +16,7 @@ public enum GameLibraries implements LibClassifier.LibraryType {
     private final String[] paths;
 
     GameLibraries(String path) {
-        this(null, new String[] { path });
+        this(null, new String[]{path});
     }
 
     GameLibraries(String... paths) {

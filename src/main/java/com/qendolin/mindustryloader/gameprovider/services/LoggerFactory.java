@@ -13,10 +13,10 @@ public class LoggerFactory {
         @Override
         public synchronized String format(LogRecord lr) {
             return String.format(format,
-                    new Date(lr.getMillis()),
-                    lr.getLevel().getName(),
-                    lr.getLoggerName(),
-                    lr.getMessage()
+                new Date(lr.getMillis()),
+                lr.getLevel().getName(),
+                lr.getLoggerName(),
+                lr.getMessage()
             );
         }
     };
@@ -35,7 +35,13 @@ public class LoggerFactory {
             public synchronized String format(LogRecord lr) {
                 return formatter.format(lr);
             }
-        });
+        }) {
+            @Override
+            public void publish(LogRecord record) {
+                super.publish(record);
+                flush();
+            }
+        };
         try {
             handler.setEncoding(StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException ignored) {

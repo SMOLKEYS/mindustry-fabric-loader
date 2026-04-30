@@ -36,16 +36,16 @@ public class MindustryGameProvider implements GameProvider {
     public static final String SERVER_ENTRYPOINT = "mindustry.server.ServerLauncher";
     public static final String SERVER_MAIN = "mindustry.server.ServerLauncher";
     private static final String[] ENTRYPOINTS = new String[]{
-            CLIENT_ENTRYPOINT, SERVER_ENTRYPOINT
+        CLIENT_ENTRYPOINT, SERVER_ENTRYPOINT
     };
     private static final Set<String> SENSITIVE_ARGS = new HashSet<>(Arrays.asList(
-            // all lowercase without --
-            "savedir",
-            "debug",
-            "localclient"));
+        // all lowercase without --
+        "savedir",
+        "debug",
+        "localclient"));
     private static final GameTransformer TRANSFORMER = new GameTransformer(
-            new MindustryEntrypointPatch(),
-            new BrandingPatch());
+        new MindustryEntrypointPatch(),
+        new BrandingPatch());
     private Arguments arguments;
     private String entrypoint;
     private Path gameJar;
@@ -69,11 +69,11 @@ public class MindustryGameProvider implements GameProvider {
         contactInfo.put("homepage", "https://mindustrygame.github.io/");
 
         BuiltinModMetadata.Builder mindustryMetaData =
-                new BuiltinModMetadata.Builder(getGameId(), getNormalizedGameVersion())
-                        .setName(getGameName())
-                        .addAuthor("Anuke", contactInfo)
-                        .setContact(new ContactInformationImpl(contactInfo))
-                        .setDescription("A sandbox tower-defense game.");
+            new BuiltinModMetadata.Builder(getGameId(), getNormalizedGameVersion())
+                .setName(getGameName())
+                .addAuthor("Anuke", contactInfo)
+                .setContact(new ContactInformationImpl(contactInfo))
+                .setDescription("A sandbox tower-defense game.");
 
         return Collections.singletonList(new BuiltinMod(Collections.singletonList(gameJar), mindustryMetaData.build()));
     }
@@ -113,52 +113,19 @@ public class MindustryGameProvider implements GameProvider {
     }
 
     @Override
-    public boolean isObfuscated() {
+    public boolean requiresUrlClassLoader() {
         return false;
     }
 
     @Override
-    public boolean requiresUrlClassLoader() {
-        return false;
+    public Set<BuiltinTransform> getBuiltinTransforms(String className) {
+        return Set.of();
     }
 
     @Override
     public boolean isEnabled() {
         return true;
     }
-
-//    @Override
-//    public boolean locateGame(FabricLauncher launcher, String[] args) {
-//        arguments = new Arguments();
-//        arguments.parse(args);
-//
-//        List<String> gameLocations = new ArrayList<>();
-//        if (System.getProperty(SystemProperties.GAME_JAR_PATH) != null) {
-//            gameLocations.add(System.getProperty(SystemProperties.GAME_JAR_PATH));
-//        }
-//        gameLocations.add("./jre/desktop.jar");
-//        gameLocations.add("./Mindustry.jar");
-//        gameLocations.add("./desktop-release.jar");
-//        gameLocations.add("./desktop.jar");
-//
-//        List<Path> jarPaths = gameLocations.stream()
-//                .map(path -> Paths.get(path).toAbsolutePath().normalize())
-//                .filter(Files::exists).toList();
-//        GameProviderHelper.FindResult result = GameProviderHelper.findFirst(jarPaths, new HashMap<>(), true, ENTRYPOINTS);
-//
-//        if (result == null || result.path == null) {
-//            Log.error(LogCategory.GAME_PROVIDER, "Could not locate game. Looked at: \n" + gameLocations.stream()
-//                    .map(path -> " - " + Paths.get(path).toAbsolutePath().normalize())
-//                    .collect(Collectors.joining("\n")));
-//            return false;
-//        }
-//
-//        entrypoint = result.name;
-//        gameJar = result.path;
-//        gameVersion = MindustryVersionLookup.getVersionFromGameJar(gameJar);
-//        processArgumentMap(arguments);
-//        return true;
-//    }
 
     @Override
     public boolean locateGame(FabricLauncher launcher, String[] args) {
@@ -175,9 +142,9 @@ public class MindustryGameProvider implements GameProvider {
 
             // The classifier will process (index) the jar files (or folders) and look
             // for all paths in GameLibraries
-            if(commonJarPath != null) {
+            if (commonJarPath != null) {
                 classifier.process(commonJarPath);
-            } else if(envJarPath != null) {
+            } else if (envJarPath != null) {
                 classifier.process(envJarPath);
             } else {
                 // You can pass the path to the game jar via the classpath
@@ -188,7 +155,7 @@ public class MindustryGameProvider implements GameProvider {
                     Path.of("./desktop-release.jar"),
                     Path.of("./desktop.jar")
                 ).filter(Files::exists).findFirst();
-                if(path.isPresent()) {
+                if (path.isPresent()) {
                     classifier.process(path.get());
                 }
             }
@@ -272,8 +239,8 @@ public class MindustryGameProvider implements GameProvider {
             String arg = ret[i];
 
             if (i + 1 < ret.length
-                    && arg.startsWith("--")
-                    && SENSITIVE_ARGS.contains(arg.substring(2).toLowerCase(Locale.ENGLISH))) {
+                && arg.startsWith("--")
+                && SENSITIVE_ARGS.contains(arg.substring(2).toLowerCase(Locale.ENGLISH))) {
                 i++; // skip value
             } else {
                 ret[writeIdx++] = arg;

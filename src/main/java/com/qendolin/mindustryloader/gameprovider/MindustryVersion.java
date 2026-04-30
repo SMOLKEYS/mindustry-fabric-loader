@@ -35,12 +35,12 @@ public class MindustryVersion {
     @Override
     public String toString() {
         return "MindustryVersion{" +
-                "type='" + type + '\'' +
-                ", modifier='" + modifier + '\'' +
-                ", number=" + number +
-                ", build=" + build +
-                ", revision=" + revision +
-                '}';
+               "type='" + type + '\'' +
+               ", modifier='" + modifier + '\'' +
+               ", number=" + number +
+               ", build=" + build +
+               ", revision=" + revision +
+               '}';
     }
 
     public StringVersion toStringVersion() {

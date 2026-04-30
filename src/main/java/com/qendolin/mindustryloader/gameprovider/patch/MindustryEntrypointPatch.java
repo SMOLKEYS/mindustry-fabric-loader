@@ -1,13 +1,11 @@
 package com.qendolin.mindustryloader.gameprovider.patch;
 
-import com.qendolin.mindustryloader.gameprovider.services.MindustryGameProvider;
 import com.qendolin.mindustryloader.gameprovider.services.MindustryHooks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.impl.game.patch.GamePatch;
 import net.fabricmc.loader.impl.launch.FabricLauncher;
 import net.fabricmc.loader.impl.util.log.Log;
 import net.fabricmc.loader.impl.util.log.LogCategory;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -25,11 +23,11 @@ public class MindustryEntrypointPatch extends GamePatch {
         if (entrypointClazz == null) {
             throw new LinkageError("Could not load entrypoint class " + entrypoint + "!");
         }
-        Log.debug(LogCategory.GAME_PATCH, "Entrypoint class is " + entrypointClazz);
+        Log.debug(LogCategory.GAME_PATCH, "Entrypoint class is " + entrypointClazz.name);
 
         if (envType == EnvType.CLIENT) {
             injectClientHook(entrypointClazz);
-        } else if(envType == EnvType.SERVER) {
+        } else if (envType == EnvType.SERVER) {
             injectServerHook(entrypointClazz);
         }
 
@@ -43,11 +41,11 @@ public class MindustryEntrypointPatch extends GamePatch {
         }
 
         injectTailInsn(initMethod, new MethodInsnNode(
-                Opcodes.INVOKESTATIC,
-                MindustryHooks.INTERNAL_NAME,
-                "initClient",
-                "()V",
-                false));
+            Opcodes.INVOKESTATIC,
+            MindustryHooks.INTERNAL_NAME,
+            "initClient",
+            "()V",
+            false));
     }
 
     private void injectServerHook(ClassNode entrypoint) {
@@ -57,11 +55,11 @@ public class MindustryEntrypointPatch extends GamePatch {
         }
 
         injectTailInsn(initMethod, new MethodInsnNode(
-                Opcodes.INVOKESTATIC,
-                MindustryHooks.INTERNAL_NAME,
-                "initServer",
-                "()V",
-                false));
+            Opcodes.INVOKESTATIC,
+            MindustryHooks.INTERNAL_NAME,
+            "initServer",
+            "()V",
+            false));
     }
 
     /**
