@@ -69,3 +69,12 @@ sourceSets {
         }
     }
 }
+
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            from components.java
+            // No need to manually add artifact(sourcesJar) now!
+        }
+    }
+}
